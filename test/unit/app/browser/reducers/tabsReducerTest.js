@@ -63,17 +63,6 @@ describe('tabsReducer unit tests', function () {
           4: 3,
           5: 4
         },
-        displayIndex: {
-          1: {
-            0: 1,
-            1: 2
-          },
-          2: {
-            2: 3,
-            3: 4,
-            4: 5
-          }
-        },
         lastActive: {
           1: [0, 1],
           2: [4, 3, 2]
@@ -101,6 +90,7 @@ describe('tabsReducer unit tests', function () {
       setActive: sinon.spy(),
       moveTo: sinon.mock(),
       reload: sinon.mock(),
+      updateTabsStateForWindow: sinon.mock(),
       create: sinon.mock()
     }
 
@@ -113,13 +103,16 @@ describe('tabsReducer unit tests', function () {
     mockery.registerMock('../tabs', this.tabsAPI)
     mockery.registerMock('../windows', this.windowsAPI)
     mockery.registerMock('../../common/state/tabState', this.tabStateAPI)
-    mockery.registerMock('../../../js/settings', { getSetting: (settingKey, settingsCollection, value) => {
+    mockery.registerMock('../../js/settings', { getSetting: (settingKey, settingsCollection, value) => {
       if (settingKey === settings.TAB_CLOSE_ACTION) {
         return tabCloseSetting
       }
       return false
     }})
     tabsReducer = require('../../../../../app/browser/reducers/tabsReducer')
+
+    this.realTabsAPI = require('../../../../../app/browser/tabs')
+    this.tabsAPI.getNextActiveTab = this.realTabsAPI.getNextActiveTab
   })
 
   after(function () {
@@ -224,8 +217,14 @@ describe('tabsReducer unit tests', function () {
     })
   })
 
+  describe.skip('APP_TAB_DETACH_MENU_ITEM_CLICKED', function () {
+    it('Someone clicked the detach menu item', function () {
+      // TODO
+    })
+  })
+
   describe.skip('APP_TAB_MOVED', function () {
-    it('moves a tab', function () {
+    it('A tab has moved', function () {
       // TODO
     })
   })
@@ -273,11 +272,13 @@ describe('tabsReducer unit tests', function () {
 
     afterEach(function () {
       this.removeTabByTabIdSpy.restore()
+      this.tabsAPI.updateTabsStateForWindow.reset()
     })
 
     it('calls tabState.removeTabByTabId', function () {
       tabsReducer(this.state, action)
       assert(this.tabStateAPI.removeTabByTabId.withArgs(this.state, action.tabId).calledOnce)
+      assert.equal(this.tabsAPI.updateTabsStateForWindow.getCall(0).args[1], 2)
     })
 
     it('does nothing if tabId is TAB_ID_NONE', function () {
@@ -302,6 +303,7 @@ describe('tabsReducer unit tests', function () {
           tabsReducer(this.state, action)
           this.clock.tick(1510)
           assert(this.tabsAPI.setActive.withArgs(3).calledOnce)
+          assert.equal(this.tabsAPI.updateTabsStateForWindow.getCall(0).args[1], 2)
         })
       })
 
@@ -325,6 +327,7 @@ describe('tabsReducer unit tests', function () {
           tabsReducer(testState, pickNextAction)
           this.clock.tick(1510)
           assert(this.tabsAPI.setActive.withArgs(4).calledOnce)
+          assert.equal(this.tabsAPI.updateTabsStateForWindow.getCall(0).args[1], 2)
         })
 
         it('chooses next unpinned tab', function () {
@@ -339,6 +342,7 @@ describe('tabsReducer unit tests', function () {
           tabsReducer(testState, pickNextAction)
           this.clock.tick(1510)
           assert(this.tabsAPI.setActive.withArgs(5).calledOnce)
+          assert.equal(this.tabsAPI.updateTabsStateForWindow.getCall(0).args[1], 2)
         })
 
         it('chooses previous unpinned tab', function () {
@@ -349,6 +353,7 @@ describe('tabsReducer unit tests', function () {
           tabsReducer(testState, action)
           this.clock.tick(1510)
           assert(this.tabsAPI.setActive.withArgs(3).calledOnce)
+          assert.equal(this.tabsAPI.updateTabsStateForWindow.getCall(0).args[1], 2)
         })
 
         describe('if no unpinned tabs come after this', function () {
@@ -365,6 +370,7 @@ describe('tabsReducer unit tests', function () {
             tabsReducer(testState, pickNextAction)
             this.clock.tick(1510)
             assert(this.tabsAPI.setActive.withArgs(4).calledOnce)
+            assert.equal(this.tabsAPI.updateTabsStateForWindow.getCall(0).args[1], 2)
           })
         })
       })
@@ -374,6 +380,7 @@ describe('tabsReducer unit tests', function () {
           tabsReducer(this.state, action)
           this.clock.tick(1510)
           assert(this.tabsAPI.setActive.withArgs(4).calledOnce)
+          assert.equal(this.tabsAPI.updateTabsStateForWindow.getCall(0).args[1], 2)
         })
 
         it('chooses parent tab id (even if parent tab was NOT last active)', function () {
@@ -383,6 +390,7 @@ describe('tabsReducer unit tests', function () {
           tabsReducer(testState, action)
           this.clock.tick(1510)
           assert(this.tabsAPI.setActive.withArgs(3).calledOnce)
+          assert.equal(this.tabsAPI.updateTabsStateForWindow.getCall(0).args[1], 2)
         })
       })
     })

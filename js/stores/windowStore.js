@@ -182,6 +182,12 @@ const newFrame = (state, frameOpts) => {
       state, frameOpts,
       nextKey, frameOpts.partitionNumber, openInForeground, insertionIndex))
 
+  if (frameOpts.attachIndex !== undefined) {
+    setImmediate(() => {
+      appActions.tabIndexChanged(frameOpts.tabId, frameOpts.attachIndex)
+    })
+  }
+
   state = frameStateUtil.updateFramesInternalIndex(state, insertionIndex)
 
   if (openInForeground) {
@@ -212,7 +218,8 @@ const frameTabIdChanged = (state, action) => {
   const index = frameStateUtil.getFrameIndex(state, action.getIn(['frameProps', 'key']))
   state = state.mergeIn(['frames', index], newFrameProps)
   state = frameStateUtil.deleteTabInternalIndex(state, oldTabId)
-  return frameStateUtil.updateFramesInternalIndex(state, index)
+  state = frameStateUtil.updateFramesInternalIndex(state, index)
+  return state
 }
 
 const frameGuestInstanceIdChanged = (state, action) => {
@@ -418,7 +425,9 @@ const doAction = (action) => {
         windowState = windowState.set('frames', frames)
         // Since the tab could have changed pages, update the tab page as well
         windowState = frameStateUtil.updateFramesInternalIndex(windowState, Math.min(sourceFrameIndex, newIndex))
+        windowState = frameStateUtil.moveFrame(windowState, sourceFrameProps.get('tabId'), newIndex)
         windowState = frameStateUtil.updateTabPageIndex(windowState, activeFrame.get('tabId'))
+        appActions.tabIndexChanged(activeFrame.get('tabId'), newIndex)
         break
       }
     case windowConstants.WINDOW_SET_LINK_HOVER_PREVIEW:

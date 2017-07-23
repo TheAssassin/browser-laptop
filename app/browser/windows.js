@@ -340,7 +340,7 @@ const api = {
     } catch (e) {
       // ignore
     }
-    return windowState.removeWindowByWindowId(state, windowId)
+    return state
   },
 
   getWindow: (windowId) => {
