@@ -21,11 +21,6 @@ const Immutable = require('immutable')
 // TODO(bridiver) - set window uuid
 let currentWindows = {}
 
-const cleanupWindow = (windowId) => {
-  delete currentWindows[windowId]
-  appActions.windowClosed({ windowId })
-}
-
 const getWindowState = (win) => {
   if (win.isFullScreen()) {
     return 'fullscreen'
@@ -128,12 +123,16 @@ const api = {
         let windowValue = getWindowValue(windowId)
 
         win.setMenuBarVisibility(true)
+        win.webContents.once('tab-strip-empty', () => {
+          console.log('tab-strip-empty from window.js========')
+        })
         win.webContents.once('will-destroy', () => {
           LocalShortcuts.unregister(win)
         })
         win.webContents.once('close', () => {
           LocalShortcuts.unregister(win)
         })
+
         win.once('close', () => {
           LocalShortcuts.unregister(win)
         })
@@ -170,6 +169,11 @@ const api = {
               win.webContents.send(messages.SHORTCUT_ACTIVE_FRAME_FORWARD)
           }
         })
+        win.webContents.on('tab-strip-empty', () => {
+          console.log('=======tab-strip-empty')
+          const windowId = win.id
+          appActions.windowClosed({ windowId })
+        })
         win.webContents.on('crashed', (e) => {
           console.error('Window crashed. Reloading...')
           win.loadURL(appUrlUtil.getBraveExtIndexHTML())
@@ -197,7 +201,6 @@ const api = {
         appActions.windowCreated(windowValue)
       })
       win.once('closed', () => {
-        cleanupWindow(windowId)
       })
       win.on('blur', () => {
         appActions.windowBlurred(windowId)
@@ -245,6 +248,11 @@ const api = {
       win.on('leave-full-screen', () => {
         updateWindowDebounce(windowId)
       })
+      win.webContents.once('tab-strip-empty', () => {
+        console.log('=======tab-strip-empty', windowId)
+        appActions.windowClosed({ windowId })
+      })
+
     })
     // TODO(bridiver) - handle restoring windows
     // windowState.getWindows(state).forEach((win) => {
@@ -351,8 +359,11 @@ const api = {
     if (BrowserWindow.getFocusedWindow()) {
       return BrowserWindow.getFocusedWindow().id
     }
-
     return windowState.WINDOW_ID_NONE
+  },
+
+  cleanupWindow: (windowId) => {
+    delete currentWindows[windowId]
   }
 }
 

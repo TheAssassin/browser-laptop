@@ -491,6 +491,10 @@ const api = {
         appActions.tabWillAttach(tab.getId())
       })
 
+      tab.on('tab-strip-empty', () => {
+        console.log('tab strip empty in tabs.js=======')
+      })
+
       tab.on('did-attach', () => {
         appActions.tabAttached(tab.getId())
       })

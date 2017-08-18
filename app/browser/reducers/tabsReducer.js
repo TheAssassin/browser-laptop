@@ -114,7 +114,7 @@ const tabsReducer = (state, action, immutableAction) => {
       break
     case appConstants.APP_TAB_UPDATED:
       state = tabState.maybeCreateTab(state, action)
-      // tabs.debugTabs(state)
+      tabs.debugTabs(state)
       break
     case appConstants.APP_TAB_CLOSE_REQUESTED:
       {

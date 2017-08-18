@@ -45,10 +45,6 @@ const closeFrame = (state, action) => {
   state = frameStateUtil.deleteFrameInternalIndex(state, frameProps)
   state = frameStateUtil.updateFramesInternalIndex(state, index)
 
-  if (state.get('frames', Immutable.List()).size === 0) {
-    appActions.closeWindow(getCurrentWindowId())
-  }
-
   const nextFrame = frameStateUtil.getFrameByIndex(state, index)
 
   if (nextFrame) {
